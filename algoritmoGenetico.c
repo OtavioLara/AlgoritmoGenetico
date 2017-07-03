@@ -6,10 +6,10 @@
 #define _MIN -10
 #define _MAX 10
 
-#define _NUM_BITS 16
-#define _POP_SIZE 30
+#define _NUM_BITS 30
+#define _POP_SIZE 50
 #define _MUTATION 1
-#define _NUM_GENERATIONS 200
+#define _NUM_GENERATIONS 20000
 
 int individual[_POP_SIZE];
 void displayBits(char* mensage, int value){
@@ -34,8 +34,7 @@ float getFeasibleValue(float num){
 	return _MIN + ( pt1 * (num/s));
 }
 void crossOver(int x1, int x2,int* nx1, int* nx2){
-	//~ float r = 1+(rand()%((sizeof(int)*8)-2)); \\com esses os filhos quase não alteravam pois x1 e x2 vem com numeros menor que 10
-	float r = 1+(rand()%3);
+	float r = 1+(rand()%((sizeof(int)*8)-2));
 	int rInt = (int)r;
 	float nf = pow(2.0,r);
 	int mask = (int)nf;
@@ -51,12 +50,6 @@ void crossOver(int x1, int x2,int* nx1, int* nx2){
 
 	*nx1 = (x1 & ~(mask)) | (aux2 & mask);
 	*nx2 = (x2 & ~(mask)) | (aux1 & mask);
-	if(*nx1 > _MAX || *nx1 < _MIN){
-		*nx1 = getFeasibleValue(*nx1);
-	}
-	if(*nx2 > _MAX || *nx2 < _MIN){
-		*nx2 = getFeasibleValue(*nx2);
-	}
 
 	
 }
@@ -64,15 +57,14 @@ void crossOver(int x1, int x2,int* nx1, int* nx2){
 void mutation(int* x){
 	int exp = pow(2,rand()%_NUM_BITS);
 	*x = *x ^ exp;
-	if(*x > _MAX || *x < _MIN){
-		*x = getFeasibleValue((float)(*x));
-	}
 }
-int fitness(int x){
-	if(x > _MAX || x < _MIN){
-		x = getFeasibleValue((float)x);
+float fitness(int value){
+	float x;
+	if(value > _MAX || value < _MIN){
+		x = getFeasibleValue((float)value);
 	}
-	return ((pow(x,2)) - (3*x) + 4);
+	return x*sin(10.0*3.14159265359*x) + 1.0;
+	//~ return ((pow(x,2)) - (3*x) + 4);
 }
 int torneio(){
 	int x,y;
@@ -87,7 +79,6 @@ int torneio(){
 	}
 }
 int main() {
-	//~ individual = malloc(sizeof(int)*_POP_SIZE);
 	int max_size = pow(2,_NUM_BITS);
 	srand(time(NULL));
 	int newIndividual[_POP_SIZE];
@@ -98,21 +89,19 @@ int main() {
 	}
 	
 	for(i = 0; i < _POP_SIZE; i++){
-		individual[i] = getFeasibleValue((float)(rand()%(max_size)));
+		individual[i] = (rand()%(max_size));
 	}
-	for(i = 0; i < _POP_SIZE; i++){
-		printf("[%d] -> %d\n",i, individual[i]);
-	}
-	//~ int* newIndividual = malloc(sizeof(int)*_POP_SIZE);
+	//~ for(i = 0; i < _POP_SIZE; i++){
+		//~ printf("[%d] -> %f\n",i, getFeasibleValue((float)individual[i]));
+	//~ }
 
-	printf("\n");
+	//~ printf("\n");
 	for(i = 0; i < _NUM_GENERATIONS; i++){
 		for(j = 0;j < _POP_SIZE-1; j+=2){
 			int ind1,ind2,i1,i2;
 			i1 = torneio();
 			i2 = torneio();
 			if(70 > rand()%100){
-				printf("fiz crossover");
 				crossOver(individual[i1],individual[i2],&ind1,&ind2);
 				if(_MUTATION > rand()%100){
 					mutation(&ind1);
@@ -134,14 +123,21 @@ int main() {
 		
 		for(k = 0; k < _POP_SIZE; k++){
 			individual[k] = newIndividual[k];
-			printf("[%d] -> %d\n",k, individual[k]);
+			//~ printf("[%d] -> %f\n",k, getFeasibleValue((float)individual[k]));
 		}
-		printf("\n");
+		//~ printf("\n");
 	}
-	printf("\n");
+	//~ printf("\n");
+	float maior = -100;
+	int iMaior = 0;
 	for(i = 0; i < _POP_SIZE; i++){
-		printf("[%d] -> %d\n",i, individual[i]);
+		if(fitness(individual[i]) > maior){
+			maior = fitness(individual[i]);
+			iMaior = i;
+		}
+		printf("[%d] -> %f\n",i, getFeasibleValue((float)individual[i]));
 	}
+	printf("\nMelhor filho é x = %f, f(x) = %f",getFeasibleValue((float)individual[iMaior]),maior);
 
 	return 0;
 }
